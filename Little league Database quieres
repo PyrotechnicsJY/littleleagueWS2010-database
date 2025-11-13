@@ -115,6 +115,35 @@ WHERE player_id = (
           AND away_team_id = (SELECT team_id FROM teams WHERE team_name = 'Northwest')
       );
 
+-- 10) Teams and their pitchers.
+SELECT
+    t.team_name,
+    p.first_name,
+    p.last_name,
+    pitch.innings_pitched,
+    pitch.strikeouts,
+    pitch.runs_allowed
+FROM player_game_pitching pitch
+JOIN players p ON pitch.player_id = p.player_id
+JOIN teams t   ON pitch.team_id = t.team_id
+ORDER BY
+    t.team_name,
+    p.last_name,
+    p.first_name;
+
+-- 11) Count of players on each team.
+SELECT
+    t.team_name,
+    t.coach,
+    COUNT(p.player_id) AS player_count
+FROM teams t
+LEFT JOIN players p
+    ON t.team_id = p.team_id
+GROUP BY
+    t.team_id, t.team_name, t.coach
+ORDER BY
+    t.team_name;
+
 
 
 
