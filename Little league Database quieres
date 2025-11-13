@@ -1,0 +1,124 @@
+--1)List all teams, coaches, and all players
+SELECT
+    t.team_name,
+    t.coach,
+    p.first_name,
+    p.last_name,
+    p.age,
+    p.primary_position
+FROM teams t
+LEFT JOIN players p
+    ON t.team_id = p.team_id
+ORDER BY t.team_name, p.last_name, p.first_name;
+
+
+-- 2)Show all players with their team and their ID
+SELECT
+    p.player_id,
+    p.first_name,
+    p.last_name,
+    p.age,
+    p.primary_position,
+    t.team_name
+FROM players p
+JOIN teams t ON p.team_id = t.team_id
+ORDER BY t.team_name, p.last_name;
+
+-- 3)Game summary with team names
+SELECT
+    g.game_id,
+    g.location,
+    home.team_name AS home_team,
+    away.team_name AS away_team,
+    g.home_score,
+    g.away_score,
+    g.total_innings
+FROM games g
+JOIN teams home ON g.home_team_id = home.team_id
+JOIN teams away ON g.away_team_id = away.team_id
+WHERE home.team_name = 'New England'
+  AND away.team_name = 'Northwest';
+
+-- 4) Batting stats for Northwest in the New England game
+SELECT
+    p.first_name,
+    p.last_name,
+    b.at_bats,
+    b.runs,
+    b.hits,
+    b.rbi,
+    b.doubles,
+    b.triples,
+    b.home_runs,
+    b.stolen_bases,
+    b.batting_avg
+FROM player_game_batting b
+JOIN players p ON b.player_id = p.player_id
+JOIN teams t   ON b.team_id   = t.team_id
+JOIN games g   ON b.game_id   = g.game_id
+WHERE t.team_name = 'Northwest'
+  AND g.home_team_id = (SELECT team_id FROM teams WHERE team_name = 'New England')
+  AND g.away_team_id = (SELECT team_id FROM teams WHERE team_name = 'Northwest');
+
+
+-- 5) Total runs and hits per team in the New England vs Northwest game
+SELECT
+    t.team_name,
+    SUM(b.runs) AS total_runs,
+    SUM(b.hits) AS total_hits
+FROM player_game_batting b
+JOIN teams t ON b.team_id = t.team_id
+JOIN games g ON b.game_id = g.game_id
+WHERE g.home_team_id = (SELECT team_id FROM teams WHERE team_name = 'New England')
+  AND g.away_team_id = (SELECT team_id FROM teams WHERE team_name = 'Northwest')
+GROUP BY t.team_name;
+
+-- 6) Average batting_avg and batter count per team in that game
+SELECT
+    t.team_name,
+    AVG(b.batting_avg) AS avg_batting_avg,
+    COUNT(*)           AS num_batters
+FROM player_game_batting b
+JOIN teams t ON b.team_id = t.team_id
+JOIN games g ON b.game_id = g.game_id
+WHERE g.home_team_id = (SELECT team_id FROM teams WHERE team_name = 'New England')
+  AND g.away_team_id = (SELECT team_id FROM teams WHERE team_name = 'Northwest')
+GROUP BY t.team_name;
+
+
+-- 7) Change the location for the New England vs Northwest game
+UPDATE games
+SET location = 'Howard J. Lamade Stadium'
+WHERE home_team_id = (SELECT team_id FROM teams WHERE team_name = 'New England')
+  AND away_team_id = (SELECT team_id FROM teams WHERE team_name = 'Northwest');
+
+
+-- 8) Update Manning's primary_position or any other players position. 
+UPDATE players
+SET primary_position = 'SP'  -- Starting Pitcher
+WHERE last_name = 'Manning'
+  AND team_id = (SELECT team_id FROM teams WHERE team_name = 'Northwest');
+
+
+-- 9) Delete Row's batting stats for the New England vs Northwest game
+DELETE FROM player_game_batting
+WHERE player_id = (
+        SELECT player_id
+        FROM players
+        WHERE last_name = 'Row'
+          AND team_id = (SELECT team_id FROM teams WHERE team_name = 'Northwest')
+      )
+  AND game_id = (
+        SELECT game_id
+        FROM games
+        WHERE home_team_id = (SELECT team_id FROM teams WHERE team_name = 'New England')
+          AND away_team_id = (SELECT team_id FROM teams WHERE team_name = 'Northwest')
+      );
+
+
+
+
+
+
+
+
